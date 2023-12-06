@@ -1,36 +1,12 @@
-import { createClient } from '@supabase/supabase-js';
-import { Note } from 'types/supabase';
-import user from '../../../fixtures/user.json';
-
-const supabase = createClient(
-  Cypress.env('NEXT_PUBLIC_SUPABASE_URL'),
-  Cypress.env('NEXT_PUBLIC_SUPABASE_KEY')
-);
+const NOTE_ID = '2c1f8ccd-42ad-4f94-ab7d-c36abb1328ca';
 
 describe('with html', () => {
   beforeEach(() => {
-    // seed the database and create a new note
-    cy.exec('npm run db:seed')
-      .then(() =>
-        supabase.auth.signIn({
-          email: user.email,
-          password: user.password,
-        })
-      )
-      .then(async (result) => {
-        const { data } = await supabase
-          .from<Note>('notes')
-          .upsert(
-            { title: 'Test', user_id: result.user?.id },
-            { onConflict: 'user_id, title' }
-          )
-          .single();
-        cy.wrap(data?.id).as('noteId');
-      });
+    cy.setup();
   });
 
   it('can copy and paste html', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
     const html = `
       <h1>Quis contra in illa aetate pudorem, constantiam, etiamsi sua nihil intersit, non tamen diligat?</h1>
@@ -78,7 +54,9 @@ describe('with html', () => {
     `;
 
     // Paste html content
-    cy.getEditor().type('{movetostart}').paste(html, 'text/html');
+    cy.getEditor().focus();
+    cy.getEditor().type('{movetostart}');
+    cy.getEditor().paste(html, 'text/html');
 
     // Heading 1
     cy.getEditor()
@@ -209,14 +187,14 @@ describe('with html', () => {
   });
 
   it('can paste multiple blocks within the editor', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
     const fragment =
       'JTVCJTdCJTIyaWQlMjIlM0ElMjJiMjBlZTBhNC1kNDRmLTQyMzYtYTVkNC03NmM5YmIxM2Q3ZDYlMjIlMkMlMjJ0eXBlJTIyJTNBJTIycGFyYWdyYXBoJTIyJTJDJTIyY2hpbGRyZW4lMjIlM0ElNUIlN0IlMjJ0ZXh0JTIyJTNBJTIyVGhpcyUyMGlzJTIwYSUyMHRlc3QlMjIlN0QlNUQlN0QlMkMlN0IlMjJpZCUyMiUzQSUyMmJlMWZhNjEwLTdiNWUtNGYwOS04ODFmLTgzM2M5Y2E4NDgxZSUyMiUyQyUyMnR5cGUlMjIlM0ElMjJibG9jay1xdW90ZSUyMiUyQyUyMmNoaWxkcmVuJTIyJTNBJTVCJTdCJTIydGV4dCUyMiUzQSUyMkElMjBibG9ja3F1b3RlJTIyJTdEJTVEJTdEJTVE';
 
-    cy.getEditor()
-      .type('{movetostart}')
-      .paste(fragment, 'application/x-slate-fragment');
+    cy.getEditor().focus();
+    cy.getEditor().type('{movetostart}');
+    cy.getEditor().paste(fragment, 'application/x-slate-fragment');
 
     cy.getEditor()
       .findByTestId('paragraph')
@@ -225,14 +203,16 @@ describe('with html', () => {
   });
 
   it('preserves whitespace around inline elements', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
     const html = `
       <p>Lorem ipsum dolor sit amet,<span> </span><strong>consectetur</strong><span> </span>adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
     `;
 
     // Paste html content
-    cy.getEditor().type('{movetostart}').paste(html, 'text/html');
+    cy.getEditor().focus();
+    cy.getEditor().type('{movetostart}');
+    cy.getEditor().paste(html, 'text/html');
 
     cy.getEditor()
       .findByTestId('paragraph')
@@ -242,3 +222,5 @@ describe('with html', () => {
       );
   });
 });
+
+export {};

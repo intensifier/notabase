@@ -1,12 +1,3 @@
-import { createClient } from '@supabase/supabase-js';
-import user from '../fixtures/user.json';
-import notes from '../fixtures/notes.json';
-
-const supabase = createClient(
-  Cypress.env('NEXT_PUBLIC_SUPABASE_URL'),
-  Cypress.env('NEXT_PUBLIC_SUPABASE_KEY')
-);
-
 // These tests use the notes from the the 'notes.json fixture
 // The note titles can be read as:
 // {# of references}{# of notes referrencing it}{id}
@@ -24,25 +15,7 @@ const supabase = createClient(
 
 describe('linked references', () => {
   beforeEach(() => {
-    cy.exec('npm run db:seed')
-      .then(() =>
-        supabase.auth.signIn({
-          email: user.email,
-          password: user.password,
-        })
-      )
-      .then(async (result) => {
-        const data = [];
-
-        // insert returned user_id into '../fixtures/notes.json'
-        for (const note of notes) {
-          (note.user_id = result.user?.id), data.push(note);
-        }
-
-        // insert completed notes to supabase
-        await supabase.from('notes').insert(data);
-      });
-    cy.visit('/app');
+    cy.setup();
   });
 
   it('should open an existing note after clicking on a note link element', () => {
@@ -128,7 +101,8 @@ describe('linked references', () => {
     // target page '001=>211' so we can target elements inside
     cy.targetPage('001=>211').within(() => {
       // create a new note link element referencing note 211
-      cy.getEditor().type('[[211]]');
+      cy.getEditor().focus();
+      cy.getEditor().type('{movetoend}[[211]]');
       // click on the link to note '211'
       // first() is specified because there are multiple links to note 211
       cy.getNoteLinkElement('211').first().click();
@@ -203,7 +177,7 @@ describe('linked references', () => {
       .click();
 
     // wait for the note to be deleted
-    cy.wait('@deleted').its('response.statusCode').should('eq', 200);
+    cy.wait('@deleted').its('response.statusCode').should('eq', 204);
 
     // open note '001=>111'
     cy.getSidebarNoteLink('001=>111').click();
@@ -224,6 +198,7 @@ describe('linked references', () => {
     // target page '001=>111' so we can target elements inside
     cy.targetPage('001=>111').within(() => {
       // delete the note link element for '111' using the keyboard
+      cy.getEditor().focus();
       cy.getEditor().type('{moveToEnd}{backspace}');
       // check '111' note link element was deleted
       cy.get('[data-testid="note-link-element"]').should('not.exist');
@@ -239,3 +214,5 @@ describe('linked references', () => {
     });
   });
 });
+
+export {};

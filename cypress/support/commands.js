@@ -24,8 +24,42 @@
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
+import { createClient } from '@supabase/supabase-js';
+import user from '../fixtures/user.json';
+import notes from '../fixtures/notes.json';
 import '@testing-library/cypress/add-commands';
 import './selection';
+
+const supabase = createClient(
+  Cypress.env('NEXT_PUBLIC_SUPABASE_URL'),
+  Cypress.env('NEXT_PUBLIC_SUPABASE_KEY')
+);
+
+Cypress.Commands.add('setup', () => {
+  cy.exec('npm run db:seed')
+    .then(async () => {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: user.password,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      return data.user;
+    })
+    .then(async (user) => {
+      const data = notes.map((note) => ({
+        ...note,
+        user_id: user?.id,
+      }));
+      // insert completed notes to supabase
+      await supabase.from('notes').insert(data);
+    });
+
+  cy.visit('/app');
+});
 
 Cypress.Commands.add(
   'paste',
@@ -103,4 +137,9 @@ Cypress.Commands.add('getNumberOfLinkedReferences', () => {
 //    })
 Cypress.Commands.add('targetPage', (noteTitle) => {
   cy.getNoteTitle(noteTitle).parent();
+});
+
+Cypress.Commands.add('visitNote', (noteId) => {
+  // eslint-disable-next-line cypress/no-unnecessary-waiting
+  cy.visit(`/app/note/${noteId}`).wait(500);
 });

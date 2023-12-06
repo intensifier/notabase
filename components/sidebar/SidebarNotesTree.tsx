@@ -1,6 +1,8 @@
-import { useState, useMemo, useCallback, memo } from 'react';
-import List from 'react-virtualized/dist/commonjs/List';
-import AutoSizer from 'react-virtualized/dist/commonjs/AutoSizer';
+import { useState, useMemo, useCallback, memo, FC, CSSProperties } from 'react';
+import _List, { ListProps } from 'react-virtualized/dist/commonjs/List';
+import _AutoSizer, {
+  AutoSizerProps,
+} from 'react-virtualized/dist/commonjs/AutoSizer';
 import { useRouter } from 'next/router';
 import {
   DndContext,
@@ -21,15 +23,20 @@ import { toast } from 'react-toastify';
 import { NoteTreeItem, store, useStore } from 'lib/store';
 import Portal from 'components/Portal';
 import supabase from 'lib/supabase';
-import { User } from 'types/supabase';
 import { useAuth } from 'utils/useAuth';
 import SidebarNoteLink from './SidebarNoteLink';
 import DraggableSidebarNoteLink from './DraggableSidebarNoteLink';
+
+// This is to workaround a type error that occurs with React 18.
+// Ideally, find a way to remove react-virtualized since it is not maintained anymore.
+const List = _List as unknown as FC<ListProps>;
+const AutoSizer = _AutoSizer as unknown as FC<AutoSizerProps>;
 
 export type FlattenedNoteTreeItem = {
   id: string;
   depth: number;
   collapsed: boolean;
+  hasChildren: boolean;
 };
 
 type Props = {
@@ -67,7 +74,7 @@ function SidebarNotesTree(props: Props) {
   const flattenNode = useCallback(
     (node: NoteTreeItem, depth: number, result: FlattenedNoteTreeItem[]) => {
       const { id, children, collapsed } = node;
-      result.push({ id, depth, collapsed });
+      result.push({ id, depth, collapsed, hasChildren: children.length > 0 });
 
       /**
        * Only push in children if:
@@ -108,7 +115,7 @@ function SidebarNotesTree(props: Props) {
       if (over && user) {
         moveNoteTreeItem(active.id, over.id);
         await supabase
-          .from<User>('users')
+          .from('users')
           .update({ note_tree: store.getState().noteTree })
           .eq('id', user.id);
       } else {
@@ -123,7 +130,7 @@ function SidebarNotesTree(props: Props) {
   );
 
   const Row = useCallback(
-    ({ index, style }) => {
+    ({ index, style }: { index: number; style: CSSProperties }) => {
       const node = flattenedData[index];
       return (
         <DraggableSidebarNoteLink
@@ -170,9 +177,10 @@ function SidebarNotesTree(props: Props) {
                     id: activeId,
                     depth: 0,
                     collapsed: false,
+                    hasChildren: false,
                   }
                 }
-                className="shadow-popover !bg-gray-50 dark:!bg-gray-800"
+                className="!bg-gray-50 shadow-popover dark:!bg-gray-800"
               />
             ) : null}
           </DragOverlay>

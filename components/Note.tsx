@@ -10,6 +10,7 @@ import updateDbNote from 'lib/api/updateNote';
 import { ProvideCurrentNote } from 'utils/useCurrentNote';
 import { caseInsensitiveStringEqual } from 'utils/string';
 import updateBacklinks from 'editor/backlinks/updateBacklinks';
+import STRINGS from 'constants/strings';
 import Backlinks from './editor/backlinks/Backlinks';
 import NoteHeader from './editor/NoteHeader';
 import ErrorBoundary from './ErrorBoundary';
@@ -154,7 +155,7 @@ function Note(props: Props) {
   if (!noteExists) {
     return (
       <div className={errorContainerClassName}>
-        <p>Whoops&mdash;it doesn&apos;t look like this note exists!</p>
+        <p className="text-2xl">{STRINGS.error.notePermissionError}</p>
       </div>
     );
   }
@@ -163,22 +164,24 @@ function Note(props: Props) {
     <ErrorBoundary
       fallback={
         <div className={errorContainerClassName}>
-          <p>An unexpected error occurred when rendering this note.</p>
+          <p className="text-2xl">
+            An unexpected error occurred when rendering this note.
+          </p>
         </div>
       }
     >
       <ProvideCurrentNote value={currentNoteValue}>
         <div id={noteId} className={`${noteContainerClassName} ${className}`}>
           <NoteHeader />
-          <div className="flex flex-col flex-1 overflow-x-hidden overflow-y-auto">
-            <div className="flex flex-col flex-1 w-full mx-auto md:w-128 lg:w-160 xl:w-192">
+          <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+            <div className="mx-auto flex w-full flex-1 flex-col md:w-128 lg:w-160 xl:w-192">
               <Title
-                className="px-8 pt-8 pb-1 md:pt-12 md:px-12"
+                className="px-8 pt-8 pb-1 md:px-12 md:pt-12"
                 noteId={noteId}
                 onChange={onTitleChange}
               />
               <Editor
-                className="flex-1 px-8 pt-2 pb-8 md:pb-12 md:px-12"
+                className="flex-1 px-8 pt-2 pb-8 md:px-12 md:pb-12"
                 noteId={noteId}
                 onChange={onEditorValueChange}
                 highlightedPath={highlightedPath}

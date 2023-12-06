@@ -6,25 +6,14 @@ import { toast } from 'react-toastify';
 import type { User } from '@supabase/supabase-js';
 import classNames from 'classnames';
 import colors from 'tailwindcss/colors';
-import {
-  useStore,
-  store,
-  NoteTreeItem,
-  getNoteTreeItem,
-  Notes,
-  SidebarTab,
-} from 'lib/store';
+import { useStore, store, NoteTreeItem, Notes, SidebarTab } from 'lib/store';
 import supabase from 'lib/supabase';
-import {
-  Note,
-  Subscription,
-  SubscriptionStatus,
-  User as DbUser,
-} from 'types/supabase';
+import { Note, SubscriptionStatus } from 'types/supabase';
 import { useAuth } from 'utils/useAuth';
 import useHotkeys from 'utils/useHotkeys';
 import { PlanId, PRICING_PLANS } from 'constants/pricing';
 import { isMobile } from 'utils/device';
+import { getNoteTreeItem } from 'lib/storeUtils';
 import Sidebar from './sidebar/Sidebar';
 import FindOrCreateModal from './FindOrCreateModal';
 import PageLoading from './PageLoading';
@@ -45,15 +34,29 @@ export default function AppLayout(props: Props) {
   const router = useRouter();
   const [isPageLoaded, setIsPageLoaded] = useState(false);
 
-  useEffect(() => {
+  const setIsSidebarOpen = useStore((state) => state.setIsSidebarOpen);
+  const setIsPageStackingOn = useStore((state) => state.setIsPageStackingOn);
+  const setupStore = useCallback(async () => {
     if (!isPageLoaded && isLoaded && user) {
       // Use user's specific store and rehydrate data
-      useStore.persist.setOptions({
+      store.persist.clearStorage();
+      store.persist.setOptions({
         name: `notabase-storage-${user.id}`,
       });
-      useStore.persist.rehydrate();
+      await store.persist.rehydrate();
+
+      // If the user is mobile, change the initial values of isSidebarOpen and isPageStackingOn to better suit mobile devices
+      // TODO: ideally this change would be temporary so that we don't override the user's existing values
+      if (isMobile()) {
+        setIsSidebarOpen(false);
+        setIsPageStackingOn(false);
+      }
     }
-  }, [isPageLoaded, isLoaded, user]);
+  }, [isPageLoaded, isLoaded, user, setIsSidebarOpen, setIsPageStackingOn]);
+
+  useEffect(() => {
+    setupStore();
+  }, [setupStore]);
 
   const setNotes = useStore((state) => state.setNotes);
   const setNoteTree = useStore((state) => state.setNoteTree);
@@ -63,8 +66,8 @@ export default function AppLayout(props: Props) {
     }
 
     const { data: notes } = await supabase
-      .from<Note>('notes')
-      .select('id, title, content, created_at, updated_at')
+      .from('notes')
+      .select()
       .eq('user_id', user.id)
       .order('title');
 
@@ -98,7 +101,7 @@ export default function AppLayout(props: Props) {
 
     // Set note tree
     const { data: userData } = await supabase
-      .from<DbUser>('users')
+      .from('users')
       .select('note_tree')
       .eq('id', user.id)
       .single();
@@ -139,7 +142,7 @@ export default function AppLayout(props: Props) {
   const initBillingDetails = useCallback(
     async (user: User) => {
       const { data } = await supabase
-        .from<Subscription>('subscriptions')
+        .from('subscriptions')
         .select(
           'plan_id, subscription_status, frequency, current_period_end, cancel_at_period_end'
         )
@@ -174,8 +177,6 @@ export default function AppLayout(props: Props) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const darkMode = useStore((state) => state.darkMode);
-  const setIsSidebarOpen = useStore((state) => state.setIsSidebarOpen);
-  const setIsPageStackingOn = useStore((state) => state.setIsPageStackingOn);
   const setSidebarTab = useStore((state) => state.setSidebarTab);
 
   const isUpgradeModalOpen = useStore((state) => state.isUpgradeModalOpen);
@@ -184,22 +185,6 @@ export default function AppLayout(props: Props) {
   const updateNote = useStore((state) => state.updateNote);
   const deleteNote = useStore((state) => state.deleteNote);
 
-  const hasHydrated = useStore((state) => state._hasHydrated);
-  useEffect(() => {
-    // If the user is mobile, the persisted data has been hydrated, and there are no open note ids (a proxy for the first load),
-    // change the initial values of isSidebarOpen and isPageStackingOn to better suit mobile devices
-    // We need to wait until after hydration because otherwise the persisted state gets overridden and thrown away
-    // After https://github.com/pmndrs/zustand/issues/562 is fixed, we can change this
-    if (
-      isMobile() &&
-      hasHydrated &&
-      store.getState().openNoteIds.length === 0
-    ) {
-      setIsSidebarOpen(false);
-      setIsPageStackingOn(false);
-    }
-  }, [setIsSidebarOpen, setIsPageStackingOn, hasHydrated]);
-
   useEffect(() => {
     if (!user) {
       return;
@@ -207,20 +192,32 @@ export default function AppLayout(props: Props) {
 
     // Subscribe to changes on the notes table for the logged in user
     const subscription = supabase
-      .from<Note>(`notes:user_id=eq.${user.id}`)
-      .on('*', (payload) => {
-        if (payload.eventType === 'INSERT') {
+      .channel(`public:notes:user_id=eq.${user.id}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notes' },
+        (payload: { new: Note }) => {
           upsertNote(payload.new);
-        } else if (payload.eventType === 'UPDATE') {
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'notes' },
+        (payload: { new: Note }) => {
           // Don't update the note if it is currently open
           const openNoteIds = store.getState().openNoteIds;
           if (!openNoteIds.includes(payload.new.id)) {
             updateNote(payload.new);
           }
-        } else if (payload.eventType === 'DELETE') {
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'notes' },
+        (payload) => {
           deleteNote(payload.old.id);
         }
-      })
+      )
       .subscribe();
 
     return () => {
@@ -292,25 +289,34 @@ export default function AppLayout(props: Props) {
     className
   );
 
+  const head = (
+    <Head>
+      <meta
+        name="theme-color"
+        content={darkMode ? colors.neutral[900] : colors.white}
+      />
+    </Head>
+  );
+
   if (!isPageLoaded) {
-    return <PageLoading />;
+    return (
+      <>
+        {head}
+        <PageLoading />
+      </>
+    );
   }
 
   return (
     <>
-      <Head>
-        <meta
-          name="theme-color"
-          content={darkMode ? colors.neutral[900] : colors.white}
-        />
-      </Head>
+      {head}
       <div id="app-container" className={appContainerClassName}>
-        <div className="flex w-full h-full dark:bg-gray-900">
+        <div className="flex h-full w-full dark:bg-gray-900">
           <Sidebar
             setIsFindOrCreateModalOpen={setIsFindOrCreateModalOpen}
             setIsSettingsOpen={setIsSettingsOpen}
           />
-          <div className="relative flex flex-col flex-1 overflow-y-hidden">
+          <div className="relative flex flex-1 flex-col overflow-y-hidden">
             <OfflineBanner />
             <UpdateBanner />
             <UpgradeBanner />

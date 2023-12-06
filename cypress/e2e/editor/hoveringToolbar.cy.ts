@@ -1,37 +1,14 @@
-import { createClient } from '@supabase/supabase-js';
-import { Note } from 'types/supabase';
-import user from '../../fixtures/user.json';
-
-const supabase = createClient(
-  Cypress.env('NEXT_PUBLIC_SUPABASE_URL'),
-  Cypress.env('NEXT_PUBLIC_SUPABASE_KEY')
-);
+const NOTE_ID = '2c1f8ccd-42ad-4f94-ab7d-c36abb1328ca';
 
 describe('hovering toolbar', () => {
   beforeEach(() => {
-    // seed the database and create a new note
-    cy.exec('npm run db:seed')
-      .then(() =>
-        supabase.auth.signIn({
-          email: user.email,
-          password: user.password,
-        })
-      )
-      .then(async (result) => {
-        const { data } = await supabase
-          .from<Note>('notes')
-          .upsert(
-            { title: 'Test', user_id: result.user?.id },
-            { onConflict: 'user_id, title' }
-          )
-          .single();
-        cy.wrap(data?.id).as('noteId');
-      });
+    cy.setup();
   });
 
   it('toolbar appears when text is selected and disappears when text is deselected', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -46,8 +23,9 @@ describe('hovering toolbar', () => {
   });
 
   it('can make text bold', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -58,8 +36,9 @@ describe('hovering toolbar', () => {
   });
 
   it('can make text italics', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -70,8 +49,9 @@ describe('hovering toolbar', () => {
   });
 
   it('can make text underlined', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -82,8 +62,9 @@ describe('hovering toolbar', () => {
   });
 
   it('can make text strikethrough', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -94,8 +75,9 @@ describe('hovering toolbar', () => {
   });
 
   it('can make text code', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -106,8 +88,9 @@ describe('hovering toolbar', () => {
   });
 
   it('can make text highlighted', function () {
-    cy.visit(`/app/note/${this.noteId}`);
+    cy.visitNote(NOTE_ID);
 
+    cy.getEditor().focus();
     cy.getEditor().type('{movetostart}This is a test');
 
     cy.getEditor().setSelection('This is');
@@ -117,3 +100,5 @@ describe('hovering toolbar', () => {
     cy.getEditor().find('mark').eq(0).should('have.text', 'This is');
   });
 });
+
+export {};

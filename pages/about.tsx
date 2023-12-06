@@ -10,7 +10,7 @@ export default function About() {
       <Head>
         <title>About | Notabase</title>
       </Head>
-      <div className="container px-6 py-16 prose lg:prose-xl prose-primary">
+      <div className="prose-primary container prose px-6 py-16 lg:prose-xl">
         <h1>About Notabase</h1>
         <div>
           <p>
@@ -86,10 +86,6 @@ export default function About() {
               open source
             </a>{' '}
             with a public{' '}
-            <Link href="/changelog">
-              <a>changelog</a>
-            </Link>{' '}
-            and{' '}
             <a
               href="https://trello.com/b/dpZLRkRR"
               className="link"
@@ -147,8 +143,8 @@ export default function About() {
           </p>
           <p>
             If Notabase&apos;s principles resonate with you, I encourage you to{' '}
-            <Link href="/signup">
-              <a className="link">sign up and give it a try</a>
+            <Link href="/signup" className="link">
+              sign up and give it a try
             </Link>
             !
           </p>

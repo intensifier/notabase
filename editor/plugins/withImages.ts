@@ -52,7 +52,10 @@ export const uploadAndInsertImage = async (
   file: File,
   path?: Path
 ) => {
-  const user = supabase.auth.user();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user;
 
   if (!user) {
     return;
@@ -90,20 +93,21 @@ export const uploadAndInsertImage = async (
 
   if (uploadError) {
     toast.dismiss(uploadingToast);
-    toast.error(uploadError);
+    toast.error(uploadError.message);
     return;
   }
 
   const expiresIn = 60 * 60 * 24 * 365 * 100; // 100 year expiry
-  const { signedURL, error: signedUrlError } = await supabase.storage
+  const { data, error: signedUrlError } = await supabase.storage
     .from('user-assets')
     .createSignedUrl(key, expiresIn);
+  const signedUrl = data?.signedUrl;
 
   toast.dismiss(uploadingToast);
-  if (signedURL) {
-    insertImage(editor, signedURL, path);
+  if (signedUrl) {
+    insertImage(editor, signedUrl, path);
   } else if (signedUrlError) {
-    toast.error(signedUrlError);
+    toast.error(signedUrlError.message);
   } else {
     toast.error(
       'There was a problem uploading your image. Please try again later.'

@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { createEditor, Editor, Element, Path, Range, Transforms } from 'slate';
+import { Editor, Element, Path, Range, Transforms } from 'slate';
 import { useSlate } from 'slate-react';
 import type { TablerIcon } from '@tabler/icons';
 import { insertBlockReference } from 'editor/formatting';
@@ -10,8 +10,8 @@ import { createNodeId } from 'editor/plugins/withNodeId';
 import { isReferenceableBlockElement } from 'editor/checks';
 import { store } from 'lib/store';
 import supabase from 'lib/supabase';
-import { Note } from 'types/supabase';
 import useDebounce from 'utils/useDebounce';
+import { getActiveOrTempEditor } from 'lib/activeEditorsStore';
 import EditorPopover from './EditorPopover';
 
 const DEBOUNCE_MS = 100;
@@ -46,7 +46,7 @@ export default function BlockAutocompletePopover() {
 
   const options: Option[] = useMemo(() => {
     const currBlock = Editor.above(editor, {
-      match: (n) => Editor.isBlock(editor, n),
+      match: (n) => Element.isElement(n) && Editor.isBlock(editor, n),
     });
     const currPath = currBlock ? currBlock[1] : [];
     return searchResults
@@ -142,8 +142,10 @@ export default function BlockAutocompletePopover() {
           blockId = createNodeId();
 
           // Set block id on the block
-          const noteEditor = createEditor();
-          noteEditor.children = store.getState().notes[option.noteId].content;
+          const noteEditor = getActiveOrTempEditor(
+            option.noteId,
+            store.getState().notes[option.noteId].content
+          );
           Transforms.setNodes(
             noteEditor,
             { id: blockId },
@@ -162,7 +164,7 @@ export default function BlockAutocompletePopover() {
 
           // Update note in database
           await supabase
-            .from<Note>('notes')
+            .from('notes')
             .update({ content: noteEditor.children })
             .eq('id', option.noteId);
         } else {
@@ -180,7 +182,7 @@ export default function BlockAutocompletePopover() {
   );
 
   const onKeyDown = useCallback(
-    (event) => {
+    (event: KeyboardEvent) => {
       // Update the selected option based on arrow key input
       if (event.key === 'ArrowUp') {
         event.preventDefault();
@@ -215,7 +217,7 @@ export default function BlockAutocompletePopover() {
   return isVisible && options.length > 0 ? (
     <EditorPopover
       placement="bottom"
-      className="flex flex-col w-96"
+      className="flex w-96 flex-col"
       onClose={hidePopover}
     >
       {options.map((option, index) => (
@@ -240,7 +242,7 @@ const OptionItem = (props: OptionProps) => {
   const { option, isSelected, onClick } = props;
   return (
     <div
-      className={`flex flex-row items-center px-4 py-1 cursor-pointer text-gray-800 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600 ${
+      className={`flex cursor-pointer flex-row items-center px-4 py-1 text-gray-800 hover:bg-gray-100 active:bg-gray-200 dark:text-gray-200 dark:hover:bg-gray-700 dark:active:bg-gray-600 ${
         isSelected ? 'bg-gray-100 dark:bg-gray-700' : ''
       }`}
       onPointerDown={(event) => event.preventDefault()}
@@ -252,7 +254,7 @@ const OptionItem = (props: OptionProps) => {
       }}
     >
       {option.icon ? (
-        <option.icon size={18} className="flex-shrink-0 mr-1" />
+        <option.icon size={18} className="mr-1 flex-shrink-0" />
       ) : null}
       <div className="overflow-hidden overflow-ellipsis whitespace-nowrap">
         <div>{option.text}</div>

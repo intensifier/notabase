@@ -14,7 +14,7 @@ export default function Footer(props: Props) {
           <div className="inline-block">
             <LogoWithText />
           </div>
-          <p className="pt-0.5 text-gray-700 max-w-sm">
+          <p className="max-w-sm pt-0.5 text-gray-700">
             Powerful and easy-to-use note-taking app for networked thinking.
           </p>
           <div className="mt-4">
@@ -34,23 +34,23 @@ export default function Footer(props: Props) {
             </a>
           </div>
         </div>
-        <div className="flex flex-wrap flex-1 space-x-16 lg:justify-end">
-          <div className="flex flex-col mt-8 space-y-2 lg:mt-0">
+        <div className="flex flex-1 flex-wrap space-x-16 lg:justify-end">
+          <div className="mt-8 flex flex-col space-y-2 lg:mt-0">
             <p className="font-medium">Product</p>
-            <Link href="/pricing">
-              <a className="text-gray-700 hover:text-primary-500">Pricing</a>
+            <Link
+              href="/pricing"
+              className="text-gray-700 hover:text-primary-500"
+            >
+              Pricing
             </Link>
             <a
-              href="https://help.notabase.io"
+              href="https://notabase.io/publish/ed280468-4096-4b21-8298-4a97c4eb990e/note/59df6332-0356-4c06-83ba-a90682ab18fc/"
               className="text-gray-700 hover:text-primary-500"
               target="_blank"
               rel="noopener noreferrer"
             >
               Help Center
             </a>
-            <Link href="/changelog">
-              <a className="text-gray-700 hover:text-primary-500">Changelog</a>
-            </Link>
             <a
               href="https://trello.com/b/dpZLRkRR"
               className="text-gray-700 hover:text-primary-500"
@@ -60,7 +60,7 @@ export default function Footer(props: Props) {
               Roadmap
             </a>
           </div>
-          <div className="flex flex-col mt-8 space-y-2 lg:mt-0">
+          <div className="mt-8 flex flex-col space-y-2 lg:mt-0">
             <p className="font-medium">Connect</p>
             <a
               href="https://twitter.com/notabase"
@@ -95,19 +95,31 @@ export default function Footer(props: Props) {
               Contact
             </a>
           </div>
-          <div className="flex flex-col mt-8 space-y-2 lg:mt-0">
+          <div className="mt-8 flex flex-col space-y-2 lg:mt-0">
             <p className="font-medium">Company</p>
-            <Link href="/about">
-              <a className="text-gray-700 hover:text-primary-500">About</a>
+            <Link
+              href="/about"
+              className="text-gray-700 hover:text-primary-500"
+            >
+              About
             </Link>
-            <Link href="/sponsors">
-              <a className="text-gray-700 hover:text-primary-500">Sponsors</a>
+            <Link
+              href="/sponsors"
+              className="text-gray-700 hover:text-primary-500"
+            >
+              Sponsors
             </Link>
-            <Link href="/privacy">
-              <a className="text-gray-700 hover:text-primary-500">Privacy</a>
+            <Link
+              href="/privacy"
+              className="text-gray-700 hover:text-primary-500"
+            >
+              Privacy
             </Link>
-            <Link href="/terms">
-              <a className="text-gray-700 hover:text-primary-500">Terms</a>
+            <Link
+              href="/terms"
+              className="text-gray-700 hover:text-primary-500"
+            >
+              Terms
             </Link>
           </div>
         </div>

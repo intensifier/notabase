@@ -27,14 +27,12 @@ const PricingPlan = (props: Props) => {
       <div className="flex justify-between p-6 sm:p-10 sm:pb-6">
         <div>
           <div>
-            <span className="inline-flex px-4 py-1 text-sm font-semibold leading-5 tracking-wide uppercase rounded-full text-primary-900 bg-primary-100 dark:bg-primary-900 dark:text-primary-100">
+            <span className="inline-flex rounded-full bg-primary-100 px-4 py-1 text-sm font-semibold uppercase leading-5 tracking-wide text-primary-900 dark:bg-primary-900 dark:text-primary-100">
               {name}
             </span>
           </div>
-          <div className="flex flex-wrap items-baseline mt-4 leading-none">
-            <span className="text-5xl font-extrabold lg:text-6xl">
-              ${price}
-            </span>
+          <div className="mt-4 flex flex-wrap items-baseline leading-none">
+            <span className="text-5xl font-semibold lg:text-6xl">${price}</span>
             {discount ? (
               <span className="px-1 text-2xl text-gray-500 line-through lg:text-3xl">
                 ${discount}
@@ -46,7 +44,7 @@ const PricingPlan = (props: Props) => {
           </div>
         </div>
       </div>
-      <div className="flex flex-col flex-1 p-6 sm:p-10 sm:pt-6">
+      <div className="flex flex-1 flex-col p-6 sm:p-10 sm:pt-6">
         <ul className="flex-1 space-y-4">
           {bulletPoints.map((bulletPoint, index) => (
             <li key={index} className="flex items-start">
@@ -59,10 +57,11 @@ const PricingPlan = (props: Props) => {
         </ul>
         <div className="mt-6">
           {button ?? (
-            <Link href="/signup">
-              <a className="block w-full px-4 py-2 text-center btn">
-                Get started for free
-              </a>
+            <Link
+              href="/signup"
+              className="btn block w-full px-4 py-2 text-center"
+            >
+              Get started for free
             </Link>
           )}
         </div>

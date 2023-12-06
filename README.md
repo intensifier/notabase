@@ -32,7 +32,7 @@ Notabase is in beta and is under active development.
 
 ## Documentation & Support
 
-If you need help getting started with Notabase, check out our [Help Center](https://help.notabase.io).
+If you need help getting started with Notabase, check out our [Help Center](https://notabase.io/publish/ed280468-4096-4b21-8298-4a97c4eb990e/note/59df6332-0356-4c06-83ba-a90682ab18fc/).
 
 ## Sponsors
 
@@ -51,9 +51,10 @@ Notabase is currently focused on the hosted experience, but it is possible for y
 1. Notabase uses Supabase as the backend (for authentication, database, and storage), so you'll have to make a [Supabase](https://supabase.io) account. If you prefer to self-host Supabase, you can follow the instructions in their [docs](https://supabase.io/docs/guides/self-hosting).
 2. Copy `.env.local.example` into `.env.local` and fill in the `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_KEY`, and `SUPABASE_SERVICE_KEY` variables from your [Supabase dashboard](https://app.supabase.io). The other environment variables are optional.
 3. Create your database tables. Apply [full schema](https://github.com/churichard/notabase/blob/main/scripts/schema.sql) and [storage setup](https://github.com/churichard/notabase/blob/main/scripts/storage-setup.sql).
-4. In your local environment, install the packages using `npm install`, and then build and run the project using `npm run build` and `npm start`. Alternatively, for a development environment, run `npm run dev`.
+4. In your local environment, install the packages using `npm install`, and then build and run the project using `npm run build` and `npm start -- --port 3000`. You will be able to see Notabase running on http://localhost:3000. Alternatively, for a development environment, run `npm run dev`.
 
-Note: the hosted and self-hosted versions of Notabase share the same codebase, so by default, there is a cap on the number of notes you can create. You can circumvent this by inserting a new row in the `subscriptions` table for your user id, with `pro` in the `plan_id` column and `active` in the `subscription_status` column.
+> [!IMPORTANT]
+> The hosted and self-hosted versions of Notabase share the same codebase, so by default, there is a cap on the number of notes you can create. You can circumvent this by inserting a new row in the `subscriptions` table for your user id, with `pro` in the `plan_id` column and `active` in the `subscription_status` column.
 
 ## Testing
 
@@ -66,14 +67,13 @@ You can run unit tests by running `npm run test`.
 First-time setup:
 
 1. Install Docker and Docker Compose.
-2. Installed the supabase-cli: `npm i -g supabase`.
-3. Run `supabase init` to initialize your Supabase project.
-4. Copy `.env.test.example` into `.env.test` and fill in the environment variables.
+2. Run `npx supabase init` to initialize your Supabase project.
+3. Copy `.env.test.example` into `.env.test` and fill in the environment variables.
 
 To run tests:
 
 1. Start Docker.
-2. Run `supabase start`.
+2. Run `npx supabase start`.
 3. Run `NODE_ENV=test npm run dev`.
 4. Run `npm run cy:open` to run Cypress tests in a GUI, or `npm run cy:run` to run them in the CLI.
 

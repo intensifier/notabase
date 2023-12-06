@@ -1,4 +1,4 @@
-import { memo, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { createEditor, Descendant, Editor } from 'slate';
 import { Editable, Slate, withReact } from 'slate-react';
 import withVoidElements from 'editor/plugins/withVoidElements';
@@ -24,10 +24,14 @@ function ReadOnlyEditor(props: Props) {
   }
   const editor = editorRef.current;
 
+  useEffect(() => {
+    editor.children = value;
+  }, [editor, value]);
+
   return (
     <Slate
       editor={editor}
-      value={value}
+      initialValue={value}
       onChange={() => {
         /* Do nothing, this is a read only editor */
       }}

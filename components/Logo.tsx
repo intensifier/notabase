@@ -14,7 +14,7 @@ export default function Logo(props: Props) {
       width={width}
       height={height}
       alt="Notabase logo"
-      layout="fixed"
+      priority={true}
     />
   );
 }
